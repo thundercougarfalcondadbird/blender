@@ -20,7 +20,10 @@ COLUMN_BURIED   = 0.10   # length hidden below the dial surface
 TILT_DEG        = 35.0   # lean from vertical
 TILT_OUTWARD    = True   # True: lean toward the rim, False: lean toward the center
 BEVEL           = 0.004  # edge rounding on columns (catches highlights)
-SPIN_SEED       = 7      # random spin of each column about its long axis; change to reshuffle
+SPIN_MODE       = "progressive"  # "progressive" or "random" spin about each column's long axis
+SPIN_START_DEG  = 45.0   # progressive: 12 o'clock spin (45 = corner points at the center)
+SPIN_STEP_DEG   = 30.0   # progressive: added per hour, clockwise seen from above
+SPIN_SEED       = 7      # random: change to reshuffle
 
 DIAL_COLOR      = (0.015, 0.025, 0.06, 1.0)   # deep navy
 COLUMN_COLOR    = (0.85, 0.85, 0.87, 1.0)     # steel
@@ -89,7 +92,11 @@ for i in range(12):
     col.name = f"Index_{i if i else 12:02d}"
     col.scale = (COLUMN_WIDTH, COLUMN_WIDTH, length)
     rot = Matrix((tangent, y_axis, axis)).transposed().to_4x4()
-    spin = Matrix.Rotation(math.radians(rng.uniform(0.0, 90.0)), 4, "Z")  # square: 90° covers all
+    if SPIN_MODE == "progressive":
+        spin_deg = -(SPIN_START_DEG + SPIN_STEP_DEG * i)   # negative = clockwise from above
+    else:
+        spin_deg = rng.uniform(0.0, 90.0)                   # square: 90° covers all
+    spin = Matrix.Rotation(math.radians(spin_deg), 4, "Z")
     col.matrix_world = Matrix.Translation(center) @ rot @ spin @ Matrix.Diagonal(
         (COLUMN_WIDTH, COLUMN_WIDTH, length, 1.0))
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
